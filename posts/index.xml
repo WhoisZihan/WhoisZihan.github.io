@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Eat, shop, drink, think.</title>
+    <link>https://whoiszihan.github.io/posts/</link>
+    <description>Recent content in Posts on Eat, shop, drink, think.</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Mon, 23 Mar 2020 18:37:15 +0800</lastBuildDate><atom:link href="https://whoiszihan.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Cs224w Lecture 6 - Message Passing and Node Classification</title>
+      <link>https://whoiszihan.github.io/posts/cs224w-lecture-6/</link>
+      <pubDate>Mon, 23 Mar 2020 18:37:15 +0800</pubDate>
+      
+      <guid>https://whoiszihan.github.io/posts/cs224w-lecture-6/</guid>
+      <description>&lt;p&gt;Lecture 6主要讲的是如何利用一些机器学习和图网络的方法来实现对图中节点的分类&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Cs224w Lecture 5 - Spectral Clustering</title>
+      <link>https://whoiszihan.github.io/posts/cs224w-lecture-5/</link>
+      <pubDate>Mon, 16 Mar 2020 21:30:04 +0800</pubDate>
+      
+      <guid>https://whoiszihan.github.io/posts/cs224w-lecture-5/</guid>
+      <description>&lt;p&gt;Lecture 5讲的是Spectral Clustering, 就是如何利用spectral的方法对图进行一定的处理, 以便进行分类, 并使得切割方案和最优解尽可能接近。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>CS224W Lecture 4 - Community Structure in Networks</title>
+      <link>https://whoiszihan.github.io/posts/cs224w-lecture-4/</link>
+      <pubDate>Sat, 14 Mar 2020 19:55:25 +0800</pubDate>
+      
+      <guid>https://whoiszihan.github.io/posts/cs224w-lecture-4/</guid>
+      <description>&lt;p&gt;Lecture 4讲的是&lt;em&gt;Community Structure in Networks&lt;/em&gt;，大致就是如何检测图中的community、overlapping community，以及评价方法。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Paper Reading - User-Level Implementations of Read-Copy Update</title>
+      <link>https://whoiszihan.github.io/posts/user-level-rcu/</link>
+      <pubDate>Fri, 17 Aug 2018 17:26:13 +0800</pubDate>
+      
+      <guid>https://whoiszihan.github.io/posts/user-level-rcu/</guid>
+      <description>&lt;h2 id=&#34;1-abstraction--motivation&#34;&gt;1. Abstraction &amp;amp; Motivation&lt;/h2&gt;
+&lt;p&gt;RCU在内核中使用非常广泛, 但在用户态很少有实现, 但用户态应用对于RCU的需求却是真实存在的。这篇论文的作者分析了QSBR-based RCU, general purpose RCU, 最后提出了他们自己的方案, signal-based RCU, 来将RCU实现在user space。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

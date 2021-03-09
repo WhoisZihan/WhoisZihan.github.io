@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Lock on Eat, shop, drink, think.</title>
+    <link>https://whoiszihan.github.io/tags/lock/</link>
+    <description>Recent content in Lock on Eat, shop, drink, think.</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Fri, 17 Aug 2018 17:26:13 +0800</lastBuildDate><atom:link href="https://whoiszihan.github.io/tags/lock/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Paper Reading - User-Level Implementations of Read-Copy Update</title>
+      <link>https://whoiszihan.github.io/posts/user-level-rcu/</link>
+      <pubDate>Fri, 17 Aug 2018 17:26:13 +0800</pubDate>
+      
+      <guid>https://whoiszihan.github.io/posts/user-level-rcu/</guid>
+      <description>&lt;h2 id=&#34;1-abstraction--motivation&#34;&gt;1. Abstraction &amp;amp; Motivation&lt;/h2&gt;
+&lt;p&gt;RCU在内核中使用非常广泛, 但在用户态很少有实现, 但用户态应用对于RCU的需求却是真实存在的。这篇论文的作者分析了QSBR-based RCU, general purpose RCU, 最后提出了他们自己的方案, signal-based RCU, 来将RCU实现在user space。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

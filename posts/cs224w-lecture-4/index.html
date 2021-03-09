@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+  <head>
+    
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <title>CS224W Lecture 4 - Community Structure in Networks - Eat, shop, drink, think.</title>
+  <meta name="description" content="Lecture 4讲的是Community Structure in Networks，大致就是如何检测图中的community、overlapping community，以及评价方法。"><script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "WebSite",
+    "name": "Eat, shop, drink, think.",
+    
+    "url": "https:\/\/whoiszihan.github.io"
+}
+</script><script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Organization",
+  "name": "",
+  "url": "https:\/\/whoiszihan.github.io"
+  
+  
+  
+  
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@id": "https:\/\/whoiszihan.github.io",
+          "name": "home"
+        }
+    },{
+        "@type": "ListItem",
+        "position": 3,
+        "item": {
+          "@id": "https:\/\/whoiszihan.github.io\/posts\/cs224w-lecture-4\/",
+          "name": "Cs224 w lecture 4 community structure in networks"
+        }
+    }]
+}
+</script><script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Article",
+  "author": {
+    "name" : ""
+  },
+  "headline": "CS224W Lecture 4 - Community Structure in Networks",
+  "description" : "Lecture 4讲的是Community Structure in Networks，大致就是如何检测图中的community、overlapping community，以及评价方法。\n",
+  "inLanguage" : "en",
+  "wordCount":  399 ,
+  "datePublished" : "2020-03-14T19:55:25",
+  "dateModified" : "2020-03-14T19:55:25",
+  "image" : "https:\/\/whoiszihan.github.io",
+  "keywords" : [ "graph, cs224w" ],
+  "mainEntityOfPage" : "https:\/\/whoiszihan.github.io\/posts\/cs224w-lecture-4\/",
+  "publisher" : {
+    "@type": "Organization",
+    "name" : "https:\/\/whoiszihan.github.io",
+    "logo" : {
+        "@type" : "ImageObject",
+        "url" : "https:\/\/whoiszihan.github.io",
+        "height" :  60 ,
+        "width" :  60
+    }
+  }
+}
+</script>
+
+<meta property="og:title" content="CS224W Lecture 4 - Community Structure in Networks" />
+<meta property="og:description" content="Lecture 4讲的是Community Structure in Networks，大致就是如何检测图中的community、overlapping community，以及评价方法。">
+<meta property="og:url" content="https://whoiszihan.github.io/posts/cs224w-lecture-4/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Eat, shop, drink, think." />
+
+  <meta name="twitter:title" content="CS224W Lecture 4 - Community Structure in Networks" />
+  <meta name="twitter:description" content="Lecture 4讲的是Community Structure in Networks，大致就是如何检测图中的community、overlapping community，以及评价方法。">
+  <meta name="twitter:card" content="summary" />
+  <meta name="generator" content="Hugo 0.82.0-DEV" />
+  <link rel="alternate" href="https://whoiszihan.github.io/index.xml" type="application/rss+xml" title="Eat, shop, drink, think."><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"><link rel="stylesheet" href="https://whoiszihan.github.io/css/main.css" /><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" /><link rel="stylesheet" href="https://whoiszihan.github.io/css/syntax.css" /><link rel="stylesheet" href="https://whoiszihan.github.io/css/codeblock.css" /><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css" integrity="sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css" integrity="sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R" crossorigin="anonymous">
+
+
+
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top navbar-custom">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#main-navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://whoiszihan.github.io">Eat, shop, drink, think.</a>
+    </div>
+
+    <div class="collapse navbar-collapse" id="main-navbar">
+      <ul class="nav navbar-nav navbar-right">
+        
+          
+            <li>
+              <a title="首页" href="/">首页</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="文章" href="/posts">文章</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="标签" href="/tags">标签</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="分类" href="/categories/">分类</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="关于" href="/about">关于</a>
+            </li>
+          
+        
+
+        
+
+        
+      </ul>
+    </div>
+
+    
+
+  </div>
+</nav>
+
+
+
+
+    
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+
+  
+  
+  
+
+
+
+
+
+
+  
+
+  <header class="header-section ">
+    
+    <div class="intro-header no-img">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="posts-heading">
+              
+                <h1>CS224W Lecture 4 - Community Structure in Networks</h1>
+              
+              
+                <hr class="small">
+              
+              
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+    
+<div class="container" role="main">
+  <div class="row">
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+      <article role="main" class="blog-post">
+        <p>Lecture 4讲的是<em>Community Structure in Networks</em>，大致就是如何检测图中的community、overlapping community，以及评价方法。</p>
+<h1 id="1-what-is-communities">1. What is Communities</h1>
+<p>上个lecture中讲了如何检测网络中各个节点的角色(role), 这个lecture讲的就是如何检测每个节点属于哪个团体(community)。顾名思义, 就是把网络分为不同的部分, 每个部分内部的节点可以认为具有更高的相似性, 一个典型就是社交网络, 在同一个专业里面的人所学的课程都是类似的，同一个班级里的人比不同班级的人之间更容易互相认识。</p>
+<p>当然, 对于一个实现没有标注的网络来说, 就会变得跟聚类类似, 得首先想好要把网络分为多少个community, 然后再用无监督的方法去分。</p>
+<p>这个东西的前身可以认为是这个Granovetter对社会关系做的一个抽象分析</p>
+<p><img src="/images/cs224w/cs224w-lec4-1.png" alt="cs224w-lec4-1"></p>
+<p>他认为同属于一个community里面的人都有strong connection, 互相基本都认识, 因此边也较多, 可以理解为clustering coefficiency较高。而不同团体之间互相认识的人少, 属于weak connection, 边也就少。</p>
+<h1 id="2-the-measurement-of-edges">2. The measurement of edges</h1>
+<p>如何分析一条边的属性呢, 定义了一个叫<code>Edge Overlap</code>的性质
+$$O_{ij} = \frac{|N(i) \cap N(j) \backslash {i,j}|}{|N(i) \cup N(j) \backslash {i,j}|}$$</p>
+<p><img src="/images/cs224w/cs224w-lec4-2.png" alt="cs224w-lec4-2"></p>
+<p>可以看到, edge overlap越高, 说明这两个点周围点的重合程度也就越高, 而当edge overlap为0时, 这就是一条<code>bridge edge</code>, 也就是如果原来图是连通的, 然后这条边没了, 那么图就不再连通了。</p>
+<p>Edge overlap有时候比单纯的边的权重要效果好, 详细可以看课件, 里面提到如果把两个人之间的通话次数当作边的权重, 其在一个edge removal的实验中效果没有edge overlap明显。</p>
+<p>不过这些都是讲了一些背景和edge的知识，和下面介绍的community的算法关系不太大, 了解就好。</p>
+<h1 id="3-properties-of-community">3. Properties of community</h1>
+<p>Community的性质可以用一个叫<code>Modularity</code>的属性来描述, 它代表网络切分成community的效果到底好不好。需要注意的是modularity是<strong>对于整个网络所有的community整体来计算, 而不是仅仅针对某一个或几个community</strong>。</p>
+<p>整个图的<strong>Modularity Q</strong>等于\( \sum_{s \in S} [(\# edges\ within\ group\ s) - (expected\ \#edges\ within\ group\ s)] \)</p>
+<p>这里那个<em>expected #edges within group s</em>是需要构建一个<code>null model</code>, 也叫<code>configuration model</code>来对比的, 这个模型其实就是对图引入了一些随机化, 使得<strong>生成的图和原图有相同的度分布, 但边的位置不同</strong>。</p>
+<p>在Null Model生成的<code>multigraph(两个点可以有多条边)</code>中, <strong>图中的两点之间边数量的期望</strong>(如果是有向图或者无向有权图, 这里也会相应变成平均入度出度或者平均权重)</p>
+<p>假设节点i和j的度分别为\( k_i, k_j \) (这里应该指的是在原始图中的度?), 那么\( e_{ij} = k_i \cdot \frac{k_j}{2m} \), 其中<code>m</code>是图中边的数量, 那么整个图边数量的期望的就是
+$$
+\begin{aligned}
+E &amp;= \frac{1}{2} \sum_{i \in N} \sum_{j \in N} \frac{k_i k_j}{2m} \ &amp;= \frac{1}{2} \cdot \frac{1}{2m} \sum_{i \in N} k_i(\sum_{j \in N} k_j) \ &amp;= \frac{1}{4m} 2m \cdot 2m = m
+\end{aligned}
+$$</p>
+<p>其中\( \sum_{u \in N} k_u = 2m \), 乘以\( \frac{1}{2} \)的意义在于求和的时候每条边算了两遍。可以看到, 这个公式和图里面实际的边的数量是一致的, 所以可以看出这个图在期望上和原始图具有相同的边的数量, 至于度的分布, 这个暂时没有看到证明。</p>
+<p>这样一来整个modularity就可以用公式定量表示了
+<img src="/images/cs224w/cs224w-lec4-3.png" alt="cs224w-lec4-3"></p>
+<p>这里应该代表两点间的实际的边的总权重(如果是无权图就是边的数量), <code>Q</code>越大, 说明某些点对的边的数量远大于随机图中的期望数量, 也就代表着这个图里面的community成分更多。</p>
+<p>因此, 如果能有一个方法找最大化modularity, 就可以找到对应的community。</p>
+<h1 id="4-louvain-algorithm">4. Louvain Algorithm</h1>
+<p>Louvain算法是一个<strong>贪心算法, 用来检测图中的commmunity, 时间复杂度是\( O(nlogn) \)</strong>, 其采用了一种层次化的思想来找。</p>
+<p>算法需要多轮迭代, 每轮步骤如下 (为了准确, 这里先用英文slide原话说下)</p>
+<ul>
+<li><strong>Phase 1:</strong> Modularity is optimized by allowing only local changes to node-communities memberships</li>
+<li><strong>Phase 2:</strong> The identified communities are <strong>aggregated</strong> into super-nodes to build a new network.</li>
+<li><strong>Goto Phase 1</strong></li>
+</ul>
+<p>这里需要说明一下的是phase 1是什么意思, 其实就是不停的选node, 然后挨个试其他的communities, 看看如果把这个node从当前community移动到另外的community, modularity会增加多少, 然后选择增量最大的node和community作为第一步的结果。<strong>如果Phase 1中发现不论怎么选都无法使得整个图的modularity增加, 那么算法结束, 输出检测到的community结果。</strong></p>
+<p>第二步就是把同属于一个community的所有点都看作一个巨点, 然后这样可以抽象得到一个新的图, 再在这个图上开始下一轮的算法迭代</p>
+<h2 id="41-louvain-1st-phase-partitioning">4.1 Louvain: 1st phase (Partitioning)</h2>
+<p>每次操作的modularity变化\( \Delta Q=\Delta Q(i \rightarrow C) + \Delta Q(D \rightarrow i) \)
+分别代表把i放进C和把i移出D造成的modularity变化。
+<img src="/images/cs224w/cs224w-lec4-4.png" alt="cs224w-lec4-4"></p>
+<p>给出了\( \Delta Q(i \rightarrow C) \)的推导, 但是没有给出移出D的推导</p>
+<p><img src="/images/cs224w/cs224w-lec4-5.png" alt="cs224w-lec4-5"></p>
+<p>左边的看懂了, 右边的过程倒是看懂了, 但是右上角那个“Modularity contribution before merging node i”这个没太看懂什么意思, 为什么还要把i的modularity减掉? 不是直接算C的modularity就可以了吗？如果有懂的大佬指教下。</p>
+<p>Phase 1停止时, 代表找到了这个样一个使得modularity增益最大的node和community的组合操作， 进入Phase 2.</p>
+<h2 id="42-phase-2">4.2 Phase 2</h2>
+<p>第二步主要是形成super-nodes, 就是把第一步中得到的各个community中节点的权重进行相加, 当作新的节点的权重。
+步骤如下</p>
+<ul>
+<li>The communities obtained in the first phase are contracted into super-nodes, and the network is created accordingly:
+<ul>
+<li>Super-nodes are connected if there is at least one edge between the nodes of the corresponding communities</li>
+<li>The weight of the edge between the two super-nodes is the sum of the weights from all edges between their corresponding communities</li>
+</ul>
+</li>
+<li>Phase 1 is then run on the super-node network</li>
+</ul>
+<p><img src="/images/cs224w/cs224w-lec4-6.png" alt="cs224w-lec4-6"></p>
+<p>但其实上面这张图最后一步形成的这个边的权重有点没看懂, 难道不是左边22, 右21边吗?</p>
+<p>算法的伪代码
+<img src="/images/cs224w/cs224w-lec4-7.png" alt="cs224w-lec4-7"></p>
+<p>看起来就比较复杂，不过大意就是和上面描述的一致, Phase 1就是负责找modularity增加最大的点和community, Phase 2就更新V, E及其相应的权重。</p>
+<h1 id="5-detecting-overlapping-communities-bigclam">5. Detecting Overlapping Communities: BigCLAM</h1>
+<p>主要思想是极大似然估计, 比如给定模型参数F, 我们可以得到生成当前图的概率\( P(G|F) \), 那么给定了图G, 如何估计参数F呢?
+BigCLAM就给出了这样一个方法。
+<img src="/images/cs224w/cs224w-lec4-8.png" alt="cs224w-lec4-8"></p>
+<p>这个\( F_{uA} \)就代表节点u和community A之间的membership strength(英文感觉翻译过来总不准确, 就直接英文了)
+<img src="/images/cs224w/cs224w-lec4-9.png" alt="cs224w-lec4-9"></p>
+<p>有了这个参数后就可以计算u和v之间有边的概率, 然后就可以套用上面提到的那个条件概率公式来求极大似然估计, 进而找出能相应的F参数组合.</p>
+<p>极大似然估计可以看csdn的这篇<a href="https://blog.csdn.net/qq_39355550/article/details/81809467">极大似然估计详解</a>, 或者英文的这篇<a href="https://towardsdatascience.com/a-gentle-introduction-to-maximum-likelihood-estimation-9fbff27ea12f">A Gentle Introduction to Maximum Likelihood Estimation</a>, 英文的这篇有代码, 看起来可以加深理解, 但是我没有跑代码。</p>
+<p><img src="/images/cs224w/cs224w-lec4-10.png" alt="cs224w-lec4-10"></p>
+<p>最后还提了一下求导加速的方法, 作为优化可以看看slides.</p>
+<blockquote>
+<p>课程主页是<a href="http://web.stanford.edu/class/cs224w/">http://web.stanford.edu/class/cs224w/</a>, 视频在b站可以找到<a href="https://www.bilibili.com/video/av90106649?p=4">CS224W 2019 Fall</a>, youtube也有</p>
+</blockquote>
+
+        
+          <div class="blog-tags">
+            
+              <a href="https://whoiszihan.github.io/tags/graph/">graph</a>&nbsp;
+            
+              <a href="https://whoiszihan.github.io/tags/cs224w/">cs224w</a>&nbsp;
+            
+          </div>
+        
+
+        
+
+        
+      </article>
+
+      
+        <ul class="pager blog-pager">
+          
+            <li class="previous">
+              <a href="https://whoiszihan.github.io/posts/user-level-rcu/" data-toggle="tooltip" data-placement="top" title="Paper Reading - User-Level Implementations of Read-Copy Update">&larr; Previous Post</a>
+            </li>
+          
+          
+            <li class="next">
+              <a href="https://whoiszihan.github.io/posts/cs224w-lecture-5/" data-toggle="tooltip" data-placement="top" title="Cs224w Lecture 5 - Spectral Clustering">Next Post &rarr;</a>
+            </li>
+          
+        </ul>
+      
+
+
+      
+
+    </div>
+  </div>
+</div>
+
+      
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <ul class="list-inline text-center footer-links">
+          
+          
+        </ul>
+        <p class="credits copyright text-muted">
+          
+
+          &nbsp;&bull;&nbsp;&copy;
+          
+            2020
+          
+
+          
+            &nbsp;&bull;&nbsp;
+            <a href="https://whoiszihan.github.io">Eat, shop, drink, think.</a>
+          
+        </p>
+        
+        <p class="credits theme-by text-muted">
+          <a href="https://gohugo.io">Hugo v0.82.0-DEV</a> powered &nbsp;&bull;&nbsp; Theme <a href="https://github.com/halogenica/beautifulhugo">Beautiful Hugo</a> adapted from <a href="https://deanattali.com/beautiful-jekyll/">Beautiful Jekyll</a>
+          
+        </p>
+      </div>
+    </div>
+  </div>
+</footer><script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+<script src="https://whoiszihan.github.io/js/main.js"></script><script> renderMathInElement(document.body); </script><script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.js" integrity="sha384-QELNnmcmU8IR9ZAykt67vGr9/rZJdHbiWi64V88fCPaOohUlHCqUD/unNN0BXSqy" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe-ui-default.min.js" integrity="sha384-m67o7SkQ1ALzKZIFh4CiTA8tmadaujiTa9Vu+nqPSwDOqHrDmxLezTdFln8077+q" crossorigin="anonymous"></script><script src="https://whoiszihan.github.io/js/load-photoswipe.js"></script>
+
+
+
+
+
+
+
+
+
+    
+  </body>
+</html>
+

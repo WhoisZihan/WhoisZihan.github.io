@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+  <head>
+    
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <title>Paper Reading - User-Level Implementations of Read-Copy Update - Eat, shop, drink, think.</title>
+  <meta name="description" content="1. Abstraction &amp; Motivation
+RCU在内核中使用非常广泛, 但在用户态很少有实现, 但用户态应用对于RCU的需求却是真实存在的。这篇论文的作者分析了QSBR-based RCU, general purpose RCU, 最后提出了他们自己的方案, signal-based RCU, 来将RCU实现在user space。"><script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "WebSite",
+    "name": "Eat, shop, drink, think.",
+    
+    "url": "https:\/\/whoiszihan.github.io"
+}
+</script><script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Organization",
+  "name": "",
+  "url": "https:\/\/whoiszihan.github.io"
+  
+  
+  
+  
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@id": "https:\/\/whoiszihan.github.io",
+          "name": "home"
+        }
+    },{
+        "@type": "ListItem",
+        "position": 3,
+        "item": {
+          "@id": "https:\/\/whoiszihan.github.io\/posts\/user-level-rcu\/",
+          "name": "Paper reading user level implementations of read copy update"
+        }
+    }]
+}
+</script><script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Article",
+  "author": {
+    "name" : ""
+  },
+  "headline": "Paper Reading - User-Level Implementations of Read-Copy Update",
+  "description" : "1. Abstraction \u0026amp; Motivation RCU在内核中使用非常广泛, 但在用户态很少有实现, 但用户态应用对于RCU的需求却是真实存在的。这篇论文的作者分析了QSBR-based RCU, general purpose RCU, 最后提出了他们自己的方案, signal-based RCU, 来将RCU实现在user space。\n",
+  "inLanguage" : "en",
+  "wordCount":  931 ,
+  "datePublished" : "2018-08-17T17:26:13",
+  "dateModified" : "2018-08-17T17:26:13",
+  "image" : "https:\/\/whoiszihan.github.io",
+  "keywords" : [ "Multithread, Lock, RCU" ],
+  "mainEntityOfPage" : "https:\/\/whoiszihan.github.io\/posts\/user-level-rcu\/",
+  "publisher" : {
+    "@type": "Organization",
+    "name" : "https:\/\/whoiszihan.github.io",
+    "logo" : {
+        "@type" : "ImageObject",
+        "url" : "https:\/\/whoiszihan.github.io",
+        "height" :  60 ,
+        "width" :  60
+    }
+  }
+}
+</script>
+
+<meta property="og:title" content="Paper Reading - User-Level Implementations of Read-Copy Update" />
+<meta property="og:description" content="1. Abstraction &amp; Motivation
+RCU在内核中使用非常广泛, 但在用户态很少有实现, 但用户态应用对于RCU的需求却是真实存在的。这篇论文的作者分析了QSBR-based RCU, general purpose RCU, 最后提出了他们自己的方案, signal-based RCU, 来将RCU实现在user space。">
+<meta property="og:url" content="https://whoiszihan.github.io/posts/user-level-rcu/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Eat, shop, drink, think." />
+
+  <meta name="twitter:title" content="Paper Reading - User-Level Implementations of Read-Copy Update" />
+  <meta name="twitter:description" content="1. Abstraction &amp; Motivation
+RCU在内核中使用非常广泛, 但在用户态很少有实现, 但用户态应用对于RCU的需求却是真实存在的。这篇论文的作者分析了QSBR-based RCU, general purpose RCU, 最后提出了他们自己的方案, signal-based RCU, 来将RCU实现在user space。">
+  <meta name="twitter:card" content="summary" />
+  <meta name="generator" content="Hugo 0.82.0-DEV" />
+  <link rel="alternate" href="https://whoiszihan.github.io/index.xml" type="application/rss+xml" title="Eat, shop, drink, think."><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"><link rel="stylesheet" href="https://whoiszihan.github.io/css/main.css" /><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" /><link rel="stylesheet" href="https://whoiszihan.github.io/css/syntax.css" /><link rel="stylesheet" href="https://whoiszihan.github.io/css/codeblock.css" /><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css" integrity="sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css" integrity="sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R" crossorigin="anonymous">
+
+
+
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top navbar-custom">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#main-navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://whoiszihan.github.io">Eat, shop, drink, think.</a>
+    </div>
+
+    <div class="collapse navbar-collapse" id="main-navbar">
+      <ul class="nav navbar-nav navbar-right">
+        
+          
+            <li>
+              <a title="首页" href="/">首页</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="文章" href="/posts">文章</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="标签" href="/tags">标签</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="分类" href="/categories/">分类</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="关于" href="/about">关于</a>
+            </li>
+          
+        
+
+        
+
+        
+      </ul>
+    </div>
+
+    
+
+  </div>
+</nav>
+
+
+
+
+    
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+
+  
+  
+  
+
+
+
+
+
+
+  
+
+  <header class="header-section ">
+    
+    <div class="intro-header no-img">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="posts-heading">
+              
+                <h1>Paper Reading - User-Level Implementations of Read-Copy Update</h1>
+              
+              
+                <hr class="small">
+              
+              
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+    
+<div class="container" role="main">
+  <div class="row">
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+      <article role="main" class="blog-post">
+        <h2 id="1-abstraction--motivation">1. Abstraction &amp; Motivation</h2>
+<p>RCU在内核中使用非常广泛, 但在用户态很少有实现, 但用户态应用对于RCU的需求却是真实存在的。这篇论文的作者分析了QSBR-based RCU, general purpose RCU, 最后提出了他们自己的方案, signal-based RCU, 来将RCU实现在user space。</p>
+<h2 id="2-rcu-overview">2. RCU overview</h2>
+<p>RCU最适合read-most操作, 而且能忍受stale/inconsistent数据。但是对于需要consistent数据的read-most操作也能工作的很好。<a href="https://lwn.net/Articles/573424/">URCU的作者在lwn发了一篇文章</a>, 还写了一个库叫<a href="http://liburcu.org/">liburcu.org</a></p>
+<p>RCU的主要思想就是读操作完全不需要重量级的锁, 需要读的时候调用<code>rcu_read_lock</code>, 完成后调用<code>rcu_read_unlock</code>. 这里假定代码没有bug, 不会在critical section中挂掉。</p>
+<p>而updater的操作就更复杂一些, 它不能影响读者, 但又不想像rwlock一样完全等所有读者完成, 所以它采取的是一种COW的方法, 首先复制对象, 修改操作在新对象上进行, 然后使用原子操作把旧指针改为指向新对象, 从这时候起, 所有后续的reader看到的都是新的object, 不会再引用旧的对象。</p>
+<p>但是这里有个问题, 旧的对象并不能马上删除, 因为这时候可能还有reader在读它, 所以updater要回收这些对象会分为三个period, 分别为<em>removal period</em>, <em>grace period</em> and <em>reclamation period</em>, 通过调用<code>synchronize_rcu</code>进入grace period等待所有旧的reader都完成, 然后在最后一个period会做实际的删除操作。</p>
+<p>注意进入到grace period的时候对象指针已经指向了新的对象, 所以在grace period开始后的reader都会读到新的数据, 不必担心。另外updater可能会需要spinlock等锁来控制和其他updater的并发访问。</p>
+<p>grace period什么时候结束? 实际上就是所有旧的reader不再引用旧的对象的时候, 然后在reclamation阶段就回收这个旧的对象, 那么什么时候可以确定不会有reader再引用呢？这个和具体的回收策略有关, 经典的回收策略有QSBR和EBR等</p>
+<!-- raw HTML omitted -->
+<h3 id="21-quiescent-state-based-reclamation-rcu">2.1 Quiescent-State-Based Reclamation RCU</h3>
+<p>The QSBR RCU is an extremely reader-friendly RCU, but it could hurt performance of writer badly. The main idea is that the reader is responsible to tell others that it does not need any resources anymore. The writer can do nothing but wait until the readers have left the <em>Quiescent State</em>.</p>
+<p>The <em>Quiescent State</em> actually ends when the reader does not need to access any data in critical section, but the waiter does not know until the reader tells it(usually through some kind of call, but there are also other methods). Jeff Preshing wrote a really <a href="http://preshing.com/20160726/using-quiescent-states-to-reclaim-memory/">good article about the QSBR on his website</a>.  A chinese version can be found <a href="https://blog.csdn.net/zhangyifei216/article/details/52767236">at the CSDN</a></p>
+<p>QSBR的总体思想就是, 写者要删除的时候, 向垃圾回收器注册一个回调函数, 然后等待所有的reader完成, 然后每个reader做完后就会调用一个quiescent callback(一般是会在结束critical section后调用, 但理论上可以在任何时候调用), 来表示我这个reader已经做完了, 进入了quiescent state, 没有任何引用到目标object的地方了。然后所有的reader都进入到了quiescent state之后, 就会触发writer注册的回调, 代表grace period已经结束, 现在可以安全删除这些object了。</p>
+<p>可以看到, QSBR是一种对reader非常友好的回收策略, 因为reader进入critical section的时候不需要拿任何锁, 可以想做多久就做多久, 只需要做完后进入quiescent state, 然后需要再使用RCU的时候调用一下<code>rcu_thread_online</code>即可, 也不需要去主动的通知写者什么, 由内核/垃圾回收器来负责回收。</p>
+<p><strong>Note:</strong></p>
+<p>对于对于有的应用, 可能只是偶尔用一下RCU, 但是一旦用起来会疯狂的用, 如果频繁的在quiescent state和其他状态之间进行切换, 会比较损耗性能(<code>rcu_quiescent_state()</code>开头和末尾各有一个<code>smp_mb()</code>, 而memory barrier是比较损耗性能的)。这些应用可以调用<code>rcu_thread_online</code>来表明我开始使用RCU了, 离开quiescent state(为什是离开? 因为quiescent state表明我没有任何对该对象的引用了, 但这里开始使用就产生了引用, 所以是从quiescent state离开), 然后调用<code>rcu_thread_offline</code>来更新状态(计数器), 但是不会离开quiescent state, 这样在<code>rcu_thread_offline</code>和下一个<code>rcu_thread_online</code>之间, reader不会进入quiescent state, 减少了额外切换操作的开销。</p>
+<p>这两个方法的代码如下</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">inline</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">rcu_thread_offline</span>(<span style="color:#66d9ef">void</span>)
+{
+    smp_mb();
+    __get_thread_var(rcu_reader_qs_gp) <span style="color:#f92672">=</span>
+    ACCESS_ONCE(rcu_gp_ctr);
+}
+
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">inline</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">rcu_thread_online</span>(<span style="color:#66d9ef">void</span>)
+{
+    __get_thread_var(rcu_reader_qs_gp) <span style="color:#f92672">=</span>
+    ACCESS_ONCE(rcu_gp_ctr) <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+    smp_mb();
+}
+</code></pre></div><p>不过值得注意的是, 这个只是作者的一种实现, 也可以有其他的实现, 只要功能一样就行, 虽然效率上可能会差别很大。</p>
+<h3 id="22-epoch-based-reclamation">2.2 Epoch-based Reclamation</h3>
+<p>不过值得注意的是, 上面的CSDN的文章也说了, QSBR只是一种回收策略, 还有其他的回收策略, 比如 <em>Epoch Based Reclamation(EBR)</em>, 关于EBR的文章可以看<a href="http://concurrencykit.org/presentations/ebr.pdf">concurrentkit的这篇presentation</a>。如果想看非常具体的回收策略技术细节的话, 可以看<a href="http://www.cs.toronto.edu/~tomhart/papers/tomhart_thesis.pdf">Tom Hart的2005年在toronto的thesis</a></p>
+<p>EBR的两外两篇文章可以看<a href="http://www.jkeabc.com/182201.html">剑客的这一篇</a>, 也可以看<a href="http://blog.jobbole.com/107955/">这篇讲无锁结构的</a>(感觉中文版翻译的有点诡异, 建议直接看<a href="http://kukuruku.co/hub/cpp/lock-free-data-structures-the-inside-memory-management-schemes">英文版的</a>)。个人感觉英文版的比较透彻, 但是剑客的那一篇最容易理解。大致思想如下, 假设有时间段\( T=[t_1, t_2] \), 如果在t1之前进行逻辑删除的节点, 都可以在t2后进行实际删除(物理删除), 那么就称时间段T为一段grace period。</p>
+<p>(插嘴: 关于QSBR和EBR的粗略对比可以看<a href="https://stackoverflow.com/a/42224909">Seiichi的stackoverflow的回答</a>)</p>
+<p>文中给出的实现代码如下</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#define N_THREADS 4 </span><span style="color:#75715e">//一共4个线程
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">bool</span> active[N_THREADS] <span style="color:#f92672">=</span> {false};
+<span style="color:#66d9ef">int</span> epoches[N_THREADS] <span style="color:#f92672">=</span> {<span style="color:#ae81ff">0</span>};
+<span style="color:#66d9ef">int</span> globla_epoch <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+vector<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">int</span><span style="color:#f92672">&gt;</span> retire_lists[<span style="color:#ae81ff">3</span>];
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">read</span>(<span style="color:#66d9ef">int</span> thread_id)
+{
+    active[thread_id] <span style="color:#f92672">=</span> true;
+    memory_barrier(); <span style="color:#75715e">//防止写读乱序
+</span><span style="color:#75715e"></span>    epoches[thread_id] <span style="color:#f92672">=</span> globla_epoch;
+    acquire_memory_barrier(); <span style="color:#75715e">//acquire语义
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">//进入临界区了。可以安全的读取*p，比如cout &lt;&lt; *p &lt;&lt; endl;
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">//......   //读取完毕，离开临界区
+</span><span style="color:#75715e"></span>    active[thread_id] <span style="color:#f92672">=</span> false;
+    release_memory_barrier();
+    <span style="color:#75715e">//release语义
+</span><span style="color:#75715e"></span>}
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">logical_deletion</span>(<span style="color:#66d9ef">int</span> thread_id)
+{
+    active[thread_id] <span style="color:#f92672">=</span> true;
+    memory_barrier(); <span style="color:#75715e">//防止写读乱序
+</span><span style="color:#75715e"></span>    epoches[thread_id] <span style="color:#f92672">=</span> globla_epoch;
+    acquire_memory_barrier();<span style="color:#75715e">//acquire语义
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">//进入临界区了，这里，我们可以安全的读取*p，比如cout &lt;&lt; *p &lt;&lt; endl;
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">//好了，假如说我们现在要删除它了。先逻辑删除。
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> <span style="color:#f92672">*</span>new_p <span style="color:#f92672">=</span> new <span style="color:#66d9ef">int</span>(<span style="color:#f92672">*</span>p <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>);
+    <span style="color:#66d9ef">int</span> <span style="color:#f92672">*</span>tmp <span style="color:#f92672">=</span> p;
+    p <span style="color:#f92672">=</span> new_p;
+    <span style="color:#75715e">//tmp对应的内存还不能马上被回收，加入到对应的retire list
+</span><span style="color:#75715e"></span>    retire_lists[epoches[thread_id]].push_back(tmp);
+    <span style="color:#75715e">//离开临界区
+</span><span style="color:#75715e"></span>    active[thread_id] <span style="color:#f92672">=</span> false;
+    <span style="color:#75715e">//看看能不能物理删除
+</span><span style="color:#75715e"></span>    try_gc();
+}
+
+<span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">try_gc</span>()
+{
+    e <span style="color:#f92672">=</span> global_epoch;
+    <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> N_THREADS; i<span style="color:#f92672">++</span>) {
+        <span style="color:#66d9ef">if</span> (active[i] <span style="color:#f92672">&amp;&amp;</span> epochs[i] <span style="color:#f92672">!=</span> e) {
+            <span style="color:#75715e">//还有部分线程没有更新到最新的全局的epoch值
+</span><span style="color:#75715e"></span>            <span style="color:#75715e">//这时候可以回收(e + 1) % 3对应的retire list。
+</span><span style="color:#75715e"></span>            free((e <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">%</span> <span style="color:#ae81ff">3</span>); <span style="color:#75715e">//不是free(e)，也不是free(e-1)。参看下面
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">return</span> false;
+        }
+    }
+    <span style="color:#75715e">//更新epoch
+</span><span style="color:#75715e"></span>    globla_epoch <span style="color:#f92672">=</span> (e <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">%</span> <span style="color:#ae81ff">3</span>;
+    <span style="color:#75715e">//更新之后，那些active线程中，部分线程的epoch值可能还是e - 1（模3）
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">//那些inactive的线程，之后将读到最新的值，也就是e。
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">//不管如何，(e + 1) % 3对应的retire list的那些内存，不会有人再访问到了，可以回收它们了
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">//因此epoch的取值需要有三种，仅仅两种是不够的。
+</span><span style="color:#75715e"></span>    free((globla_epoch <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">%</span> <span style="color:#ae81ff">3</span>);
+}
+
+<span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">free</span>(<span style="color:#66d9ef">int</span> epoch)
+{
+    <span style="color:#66d9ef">for</span> each pointer in retire_lists[epoch]
+        <span style="color:#66d9ef">if</span> (pointer is not NULL)
+            delete pointer;
+} 
+</code></pre></div><h4 id="reader-with-ebr">reader (with EBR)</h4>
+<p>对于EBR的读者来说, 首先需要在active数组中标识自己的部分为true, 代笔自己现在要试图去读数据, 然后会把自己的epoch更新为全局的epoch, 然后就进入了read critical section了。</p>
+<p>然后reader执行完critical section后, 需要把active数组中自己的部分设置为false, 表示自己读完了。注意这里的两个memory barrier是不可少的, 它可以防止编译器的乱序优化。</p>
+<h4 id="writer-with-ebr">writer (with EBR)</h4>
+<p>采用EBT的写者的开头和reader很类似, 都是需要首先标注active数组中自己的部分并且获取global_epoch。然后这时候writer并不是直接修改原始数据, 而是创建了一个数据的副本, 然后把旧值给放到对应的retire_list里面，索引是当前线程的epoch值。这里一共有3个epoch, 可以看到之前的大部分操作都是<code>(e+1) % 3</code>, 事实上至少需要3个epoch, 一般3个也就够了。</p>
+<p>然后放完后重新设置了active数组, 然后就调用了<code>try_gc</code>。</p>
+<p>这个try_gc内部实现和网上其他的一些实现提到的略有不同。</p>
+<p>其他的实现大部分都是检查<code>if ( all threads are in the epoch which m_nGlobalEpoch )</code>, 也就是必须所有的thread的epoch值都等于global_epoch的时候, 然后才释放(e + 1) % 3的元素(注意这里<code>(e + 1) % 3 == (e - 2) % 3</code>, 所以实质上就是释放epoch是**<code>e - 2</code>**的元素, 后面遇到<code>(e + 1) % 3</code>可以直接脑海里替换成<code>(e - 2) % 3</code>)。</p>
+<p>但是这篇文章给的实现为了尽可能减小内存开销, 即使遇到遇到一个active的线程或者有线程的epoch值还没有更新到全局的epoch, 仍然释放当前<code>(e + 1) % 3</code>的元素, <strong>注意这里的e还没有加1</strong>, 也就是可能的释放现有的元素。那么为什么(e - 2)的元素现在可以释放了呢, 真的不会再有线程引用它了吗? <strong>是的</strong>, 但是原因还需要继续向下看。</p>
+<p>问题的关键在于, <strong><code>global_epoch</code>到底是在什么条件下进行的更新?</strong> 根据上面的代码可以看到, 如果所有的线程都不是active, 且都更新到了全局的epoch, 那么<code>global_epoch</code>就会进行加1操作。这个条件很关键, 因为这说明, 当前所有的线程都读到了最新的变量的值(否则它的epoch不会等于当前最新的global_epoch), 所以这时候<strong>不会再有任何线程引用epoch值小于global_epoch的对象</strong>, 这些对象的确是可释放的。但是马上global_epoch进行了加1操作, 所以这里需要释放的是epoch等于<code>(e - 2) % 3 = (e + 1) % 3</code>的所有元素。</p>
+<p>这就是EBR的整个思想, 可以看到它对于读写都是无锁的, 但是它有一个缺点, 就是如果有一个线程没有及时更新epoch的值的话, 那么剩下的线程就无法及时删除元素, 这样内存消耗会立即增大。</p>
+<h3 id="22-general-purpose-rcu">2.2 General-Purpose RCU</h3>
+<p>general的意思就是为了让普通的应用也能用, 而不仅仅是almost reader的情况, 但是代价就是reader的overhead会比较大, 不过作者说这个overhead仍然比一个硬件的<code>compare-and-swap</code>操作的消耗要小。</p>
+<p>其读者的操作比较简单, 具体而言就是对每个线程都分配一个变量rcu_reader_gp, 每次进行<code>rcu_read_lock</code>的时候就把对应<code>per_thread(rcu_reader_gp)</code>进行加1操作, 然后每次进行<code>rcu_read_unlock</code>的时候就把变量进行减1操作。它之所以比quiescent state的reader要慢是因为lock和unlock的时候会有额外操作, 而且还有memory barrier。</p>
+<p>至于writer的操作, 它有个比较特殊的地方, 首先看下general writer的代码</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">inline</span> <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">rcu_old_gp_ongoing</span>(<span style="color:#66d9ef">int</span> t)
+{
+    <span style="color:#66d9ef">int</span> v <span style="color:#f92672">=</span> ACCESS_ONCE(per_thread(rcu_reader_gp, t));
+
+    <span style="color:#66d9ef">return</span> (v <span style="color:#f92672">&amp;</span> RCU_GP_CTR_NEST_MASK) <span style="color:#f92672">&amp;&amp;</span>
+        ((v <span style="color:#960050;background-color:#1e0010">ˆ</span> rcu_gp_ctr) <span style="color:#f92672">&amp;</span>  <span style="color:#960050;background-color:#1e0010">̃</span>RCU_GP_CTR_NEST_MASK);
+}
+
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">flip_counter_and_wait</span>(<span style="color:#66d9ef">void</span>)
+{
+    <span style="color:#66d9ef">int</span> t;
+
+    rcu_gp_ctr <span style="color:#960050;background-color:#1e0010">ˆ</span><span style="color:#f92672">=</span> RCU_GP_CTR_BOTTOM_BIT;
+    for_each_thread(t) {
+        <span style="color:#66d9ef">while</span> (rcu_old_gp_ongoing(t)) {
+            poll(NULL, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">10</span>);
+            barrier();
+        }
+    }
+}
+
+<span style="color:#66d9ef">void</span> <span style="color:#a6e22e">synchronize_rcu</span>(<span style="color:#66d9ef">void</span>)
+{
+    smp_mb();
+    mutex_lock(<span style="color:#f92672">&amp;</span>rcu_gp_lock);
+    flip_counter_and_wait();
+    flip_counter_and_wait();
+    mutex_unlock(<span style="color:#f92672">&amp;</span>rcu_gp_lock);
+    smp_mb();
+}
+</code></pre></div><p><code>flip_counter_and_wait</code>将<code>rcu_gp_ctr</code>的bottom bit设置为1, 代表现在有writer进入到了grace period, 然后等待所有的reader线程做完。</p>
+<p>如何判断呢, 就是rcu_old_gp_ongoing这个函数, 主要有两个判断, 第一个判断<code>(v &amp; RCU_GP_CTR_NEST_MASK)</code>容易理解, 看是否有多个reader；那么第二个判断<code>((v ˆ rcu_gp_ctr) &amp;  ̃RCU_GP_CTR_NEST_MASK)</code>又是用来判断什么呢?</p>
+<p>这个是判断<code>RCU_GP_CTR_BOTTOM_BIT</code>的, 如果线程变量和全局变量的bottom bit不相同, 那么就需要等待。为什么？</p>
+<ul>
+<li>如果<code>rcu_thread_gp</code>的bottom bit为1而全局<code>gp_rcu_ctr</code>的bottom bit为0, 那么说明这个reader是在两个<code>flip_counter_and_wait</code>之间进入的，需要等待；</li>
+<li>如果<code>rcu_thread_gp</code>的bottom bit为0而全局<code>gp_rcu_ctr</code>的bottom bit为1, 那么说明writer正在进入grace period, 而reader是在grace period之前做的, 所以要等待这个reader完成。</li>
+</ul>
+<p>这里还有一个问题需要解决, 就是为什么<code>flip_counter_and_wait</code>要做两次? 这是因为防止race condition中reader没做完writer就进入了critical section的问题, 因为rcu的语义不像rwlock那样强, writer在执行的时候reader(如果强行执行的话)也是可以执行的。为了说明这个问题, 先把general reader的代码也贴上来</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#define RCU_GP_CTR_BOTTOM_BIT 0x80000000
+</span><span style="color:#75715e">#define RCU_GP_CTR_NEST_MASK (RCU_GP_CTR_BOTTOM_BIT - 1)
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">long</span> rcu_gp_ctr <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+DEFINE_PER_THREAD(<span style="color:#66d9ef">long</span>, rcu_reader_gp);
+
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">inline</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">rcu_read_lock</span>(<span style="color:#66d9ef">void</span>)
+{
+    <span style="color:#66d9ef">long</span> tmp;
+    <span style="color:#66d9ef">long</span> <span style="color:#f92672">*</span>rrgp;
+
+    rrgp <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>__get_thread_var(rcu_reader_gp);
+    tmp <span style="color:#f92672">=</span> <span style="color:#f92672">*</span>rrgp;
+    <span style="color:#66d9ef">if</span> ((tmp <span style="color:#f92672">&amp;</span> RCU_GP_CTR_NEST_MASK) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) {
+        <span style="color:#f92672">*</span>rrgp <span style="color:#f92672">=</span> ACCESS_ONCE(rcu_gp_ctr);
+        smp_mb();
+    } <span style="color:#66d9ef">else</span> {
+        <span style="color:#f92672">*</span>rrgp <span style="color:#f92672">=</span> tmp <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+    }
+}
+
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">inline</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">rcu_read_unlock</span>(<span style="color:#66d9ef">void</span>)
+{
+    <span style="color:#66d9ef">long</span> tmp;
+
+    smp_mb();
+    __get_thread_var(rcu_reader_gp)<span style="color:#f92672">--</span>;
+}
+</code></pre></div><p>现在考虑如下场景,</p>
+<p>(1) 首先线程A是一个reader, 执行reader中的11-13行, 然后发现13行的判断满足, 于是获取了<code>rcu_gp_ctr</code>的值, 但是还没有存到线程的<code>rcu_reader_gp</code>变量中去, 此时<code>rcu_reader_gp</code>的值还为0.</p>
+<p>(2) 线程B是一个writer, 执行synchronize_rcu, 进入到<code>flip_counter_and_wait</code>中, 首先B更新了<code>rcu_gp_ctr</code>的bottom bit位, 然后14-19行判断每一个线程。判断到线程A的时候, 因为线程A的<code>rcu_reader_gp</code>值还没有更新仍然是0, 所以B判断的时候会跳过线程A;</p>
+<p>(3) 这时候A又继续执行, 但是A的<code>rcu_gp_ctr</code>使用的是旧值(记得(1)中说的, ACCESS_ONCE只会获取一次, 而B是在A获取了之后才去修改<code>rcu_gp_ctr</code>的值的), 所以线程A的<code>rcu_reader_gp</code>会被设置成为<strong>旧的</strong><code>rcu_gp_ctr</code>, 而旧的<code>rcu_gp_ctr</code>的bottom bit为0</p>
+<p>(3) 假定这时候只做一次<code>flip_counter_and_wait</code>的话, B的grace period就结束了, 此时<code>rcu_gp_ctr</code>的bottom bit仍然为1, 然后B又做一次<code>synchronize_rcu</code>, 这次又调用<code>flip_counter_and_wait</code>使得<code>rcu_gp_ctr</code>的bottom bit又变为了0, 然后发现线程A的<code>rcu_thread_gp</code>的bottom bit和<code>rcu_gp_ctr</code>的bottom bit是相同的, 所以又会忽略线程A, 就导致B返回后进入对象的删除阶段, 但这个时候A还在reader critical section里! 这就违反了RCU的语义。(**// TODO: **这里我不是很明白论文里面的那个分析, 为什么B要再做了一次<code>synchronize_rcu</code>才会产生违反语义的情况? 我个人觉得第一次<code>synchronize_rcu</code>调用返回后就会违反语义的情况啊!)</p>
+<p>所以需要做两次<code>flip_counter_and_wait</code>, 这样第二次调用<code>synchronize_rcu</code>的时候就可以检查到上次仍然有reader在critical secion里, 就会等待. <strong>// TODO.</strong> 但在第一次调用<code>synchronize_rcu</code>的时候不需要等待这个reader完成吗? 存疑</p>
+<p><strong>不过这里有个问题,如果说writer在做完两次<code>flip_counter_and_wait</code>后, 又来了一个reader怎么办, 这样岂不是reader和writer都进入了critical section?</strong> <del><del>这应该就是RCU的语义特性, 就是如果writer还在执行的时候不应该有reader执行(注意这里说的是不应该而不是不可能, 代码中只保证writer之前的reader已经做完了, 但并没有禁止writer做的时候不能有新的reader, 如果reader强行要进是会进的, 只是可能读到stale/inconsistent data, 而不像rwlock那样有很强的语义顺序性保证)</del></del></p>
+<p>RCU的语义确实比较弱化, 但是这里和语义没有太大关系, 之前说过了, writer采取的是COW的机制, 只是会延迟回收旧的对象, 其实在grace period开始之前, updater已经把指针更新成为了新的对象(通过原子操作就能实现), 所以在grace period开始后再开始的reader, 读到的是writer修改过的数据, 而在grace period之前开始的reader, 读到的则是旧的数据。具体的可以参考腾讯云社区的这篇<a href="https://cloud.tencent.com/developer/article/1006204">深入理解Linux的RCU机制</a></p>
+<h3 id="23-signal-based-rcu">2.3 Signal-based RCU</h3>
+<p>作者分析了现有的一些RCU的实现方案后发现, general RCU的overhead之所以太高, 是因为read-side有像memory barrier这样的primitive操作, 这些操作很expensive。作者于是就提出, 其实不是每次调用<code>rcu_read_lock</code>的时候, 都必须要memory barrier这类操作的。</p>
+<p>那什么时候做呢? 论文给出的方法是在writer进入到<code>synchronize_rcu</code>的时候再做, 可是reader没法主动知道updater什么时候进入到grace period呀, 那么就需要updater去通知reader, 采用的通知的方法就是使用signal (个人觉得signal其实不会很快啊&hellip; 因为signal会下陷经过内核, 而且只有目标thread被调度到的时候才会进行)</p>
+<p>这里因为大致原理都是一样, 所以就不展开描述, 要更多细节可以直接看他们的论文。</p>
+<p>最后它还讲了一个wait-free update, 但是它的描述非常奇怪, 其实最后还是会阻塞的, 但是它说</p>
+<blockquote>
+<p>Of course, the use of synchronize rcu() causes call rcucleanup() to be blocking. However, as long as the callback function func that was passed to call rcu() does nothing other than free memory, as long as the synchronization mechanism used to coordinate RCU updates is wait-free, and as long as there is sufficient memory for allocations to succeed without blocking, RCU-based algorithms that use call rcu() will themselves be wait-free.</p>
+</blockquote>
+<p>可是我如果有wait-free的coordination算法, 即使不用这一套也可以wait-free啊&hellip;不是很理解</p>
+<h2 id="3-conclusion">3. Conclusion</h2>
+<p>读这篇paper花了我好长时间, 因为之前对于RCU不是很了解, 所以耗费在背景知识上的时间很多, 加上一些锁算法的设计都比较精巧, 所以有时候完全理解算法细节也要花一番功夫, 加上有些地方和自己的理解有出入需要多看几遍，但总体而言还是非常值得的。</p>
+
+        
+          <div class="blog-tags">
+            
+              <a href="https://whoiszihan.github.io/tags/multithread/">Multithread</a>&nbsp;
+            
+              <a href="https://whoiszihan.github.io/tags/lock/">Lock</a>&nbsp;
+            
+              <a href="https://whoiszihan.github.io/tags/rcu/">RCU</a>&nbsp;
+            
+          </div>
+        
+
+        
+
+        
+      </article>
+
+      
+        <ul class="pager blog-pager">
+          
+          
+            <li class="next">
+              <a href="https://whoiszihan.github.io/posts/cs224w-lecture-4/" data-toggle="tooltip" data-placement="top" title="CS224W Lecture 4 - Community Structure in Networks">Next Post &rarr;</a>
+            </li>
+          
+        </ul>
+      
+
+
+      
+
+    </div>
+  </div>
+</div>
+
+      
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <ul class="list-inline text-center footer-links">
+          
+          
+        </ul>
+        <p class="credits copyright text-muted">
+          
+
+          &nbsp;&bull;&nbsp;&copy;
+          
+            2020
+          
+
+          
+            &nbsp;&bull;&nbsp;
+            <a href="https://whoiszihan.github.io">Eat, shop, drink, think.</a>
+          
+        </p>
+        
+        <p class="credits theme-by text-muted">
+          <a href="https://gohugo.io">Hugo v0.82.0-DEV</a> powered &nbsp;&bull;&nbsp; Theme <a href="https://github.com/halogenica/beautifulhugo">Beautiful Hugo</a> adapted from <a href="https://deanattali.com/beautiful-jekyll/">Beautiful Jekyll</a>
+          
+        </p>
+      </div>
+    </div>
+  </div>
+</footer><script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+<script src="https://whoiszihan.github.io/js/main.js"></script><script> renderMathInElement(document.body); </script><script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.js" integrity="sha384-QELNnmcmU8IR9ZAykt67vGr9/rZJdHbiWi64V88fCPaOohUlHCqUD/unNN0BXSqy" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe-ui-default.min.js" integrity="sha384-m67o7SkQ1ALzKZIFh4CiTA8tmadaujiTa9Vu+nqPSwDOqHrDmxLezTdFln8077+q" crossorigin="anonymous"></script><script src="https://whoiszihan.github.io/js/load-photoswipe.js"></script>
+
+
+
+
+
+
+
+
+
+    
+  </body>
+</html>
+

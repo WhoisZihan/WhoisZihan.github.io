@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on Eat, shop, drink, think.</title>
+    <link>https://whoiszihan.github.io/tags/</link>
+    <description>Recent content in Tags on Eat, shop, drink, think.</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Mon, 23 Mar 2020 18:37:15 +0800</lastBuildDate><atom:link href="https://whoiszihan.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>cs224w</title>
+      <link>https://whoiszihan.github.io/tags/cs224w/</link>
+      <pubDate>Mon, 23 Mar 2020 18:37:15 +0800</pubDate>
+      
+      <guid>https://whoiszihan.github.io/tags/cs224w/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>graph</title>
+      <link>https://whoiszihan.github.io/tags/graph/</link>
+      <pubDate>Mon, 23 Mar 2020 18:37:15 +0800</pubDate>
+      
+      <guid>https://whoiszihan.github.io/tags/graph/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Lock</title>
+      <link>https://whoiszihan.github.io/tags/lock/</link>
+      <pubDate>Fri, 17 Aug 2018 17:26:13 +0800</pubDate>
+      
+      <guid>https://whoiszihan.github.io/tags/lock/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Multithread</title>
+      <link>https://whoiszihan.github.io/tags/multithread/</link>
+      <pubDate>Fri, 17 Aug 2018 17:26:13 +0800</pubDate>
+      
+      <guid>https://whoiszihan.github.io/tags/multithread/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>RCU</title>
+      <link>https://whoiszihan.github.io/tags/rcu/</link>
+      <pubDate>Fri, 17 Aug 2018 17:26:13 +0800</pubDate>
+      
+      <guid>https://whoiszihan.github.io/tags/rcu/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

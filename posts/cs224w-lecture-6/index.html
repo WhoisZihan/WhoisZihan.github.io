@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+  <head>
+    
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <title>Cs224w Lecture 6 - Message Passing and Node Classification - Eat, shop, drink, think.</title>
+  <meta name="description" content="Lecture 6主要讲的是如何利用一些机器学习和图网络的方法来实现对图中节点的分类"><script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "WebSite",
+    "name": "Eat, shop, drink, think.",
+    
+    "url": "https:\/\/whoiszihan.github.io"
+}
+</script><script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Organization",
+  "name": "",
+  "url": "https:\/\/whoiszihan.github.io"
+  
+  
+  
+  
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@id": "https:\/\/whoiszihan.github.io",
+          "name": "home"
+        }
+    },{
+        "@type": "ListItem",
+        "position": 3,
+        "item": {
+          "@id": "https:\/\/whoiszihan.github.io\/posts\/cs224w-lecture-6\/",
+          "name": "Cs224w lecture 6 message passing and node classification"
+        }
+    }]
+}
+</script><script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "Article",
+  "author": {
+    "name" : ""
+  },
+  "headline": "Cs224w Lecture 6 - Message Passing and Node Classification",
+  "description" : "Lecture 6主要讲的是如何利用一些机器学习和图网络的方法来实现对图中节点的分类\n",
+  "inLanguage" : "en",
+  "wordCount":  617 ,
+  "datePublished" : "2020-03-23T18:37:15",
+  "dateModified" : "2020-03-23T18:37:15",
+  "image" : "https:\/\/whoiszihan.github.io",
+  "keywords" : [ "graph, cs224w" ],
+  "mainEntityOfPage" : "https:\/\/whoiszihan.github.io\/posts\/cs224w-lecture-6\/",
+  "publisher" : {
+    "@type": "Organization",
+    "name" : "https:\/\/whoiszihan.github.io",
+    "logo" : {
+        "@type" : "ImageObject",
+        "url" : "https:\/\/whoiszihan.github.io",
+        "height" :  60 ,
+        "width" :  60
+    }
+  }
+}
+</script>
+
+<meta property="og:title" content="Cs224w Lecture 6 - Message Passing and Node Classification" />
+<meta property="og:description" content="Lecture 6主要讲的是如何利用一些机器学习和图网络的方法来实现对图中节点的分类">
+<meta property="og:url" content="https://whoiszihan.github.io/posts/cs224w-lecture-6/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Eat, shop, drink, think." />
+
+  <meta name="twitter:title" content="Cs224w Lecture 6 - Message Passing and Node Classification" />
+  <meta name="twitter:description" content="Lecture 6主要讲的是如何利用一些机器学习和图网络的方法来实现对图中节点的分类">
+  <meta name="twitter:card" content="summary" />
+  <meta name="generator" content="Hugo 0.82.0-DEV" />
+  <link rel="alternate" href="https://whoiszihan.github.io/index.xml" type="application/rss+xml" title="Eat, shop, drink, think."><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css" integrity="sha384-9eLZqc9ds8eNjO3TmqPeYcDj8n+Qfa4nuSiGYa6DjLNcv9BtN69ZIulL9+8CqC9Y" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"><link rel="stylesheet" href="https://whoiszihan.github.io/css/main.css" /><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" /><link rel="stylesheet" href="https://whoiszihan.github.io/css/syntax.css" /><link rel="stylesheet" href="https://whoiszihan.github.io/css/codeblock.css" /><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.css" integrity="sha384-h/L2W9KefUClHWaty3SLE5F/qvc4djlyR4qY3NUV5HGQBBW7stbcfff1+I/vmsHh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/default-skin/default-skin.min.css" integrity="sha384-iD0dNku6PYSIQLyfTOpB06F2KCZJAKLOThS5HRe8b3ibhdEQ6eKsFf/EeFxdOt5R" crossorigin="anonymous">
+
+
+
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top navbar-custom">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#main-navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://whoiszihan.github.io">Eat, shop, drink, think.</a>
+    </div>
+
+    <div class="collapse navbar-collapse" id="main-navbar">
+      <ul class="nav navbar-nav navbar-right">
+        
+          
+            <li>
+              <a title="首页" href="/">首页</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="文章" href="/posts">文章</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="标签" href="/tags">标签</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="分类" href="/categories/">分类</a>
+            </li>
+          
+        
+          
+            <li>
+              <a title="关于" href="/about">关于</a>
+            </li>
+          
+        
+
+        
+
+        
+      </ul>
+    </div>
+
+    
+
+  </div>
+</nav>
+
+
+
+
+    
+
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+<div class="pswp__bg"></div>
+
+<div class="pswp__scroll-wrap">
+    
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+    
+    <div class="pswp__ui pswp__ui--hidden">
+    <div class="pswp__top-bar">
+      
+      <div class="pswp__counter"></div>
+      <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+      <button class="pswp__button pswp__button--share" title="Share"></button>
+      <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+      <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+      
+      
+      <div class="pswp__preloader">
+        <div class="pswp__preloader__icn">
+          <div class="pswp__preloader__cut">
+            <div class="pswp__preloader__donut"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+      <div class="pswp__share-tooltip"></div>
+    </div>
+    <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+    </button>
+    <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+    </button>
+    <div class="pswp__caption">
+      <div class="pswp__caption__center"></div>
+    </div>
+    </div>
+    </div>
+</div>
+
+
+  
+  
+  
+
+
+
+
+
+
+  
+
+  <header class="header-section ">
+    
+    <div class="intro-header no-img">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+            <div class="posts-heading">
+              
+                <h1>Cs224w Lecture 6 - Message Passing and Node Classification</h1>
+              
+              
+                <hr class="small">
+              
+              
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+    
+<div class="container" role="main">
+  <div class="row">
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+      <article role="main" class="blog-post">
+        <p>Lecture 6主要讲的是如何利用一些机器学习和图网络的方法来实现对图中节点的分类</p>
+<h1 id="1-node-classification-in-network">1. Node Classification in Network</h1>
+<p>课件前半部分感觉一些介绍性的话比较多, 所以图比较少, 主要内容就是说网络中存在所谓的<em>correlation</em>, 主要有三种</p>
+<ul>
+<li>
+<p>Homophily: 同质性, 同一个群体里面的若干个体具有同质性</p>
+</li>
+<li>
+<p>Influence: 个体的行文会受到群体的影响</p>
+</li>
+<li>
+<p>Confounding: 环境会对个体和群体都有影响</p>
+</li>
+</ul>
+<p>基本都是概念的东西, 目前而言理解就好。</p>
+<p>那么, 在网络中, 给定一些节点的类别, 如何确定剩下其他节点的类别呢？根据利用信息的多少, 大概分为三个层次</p>
+<ul>
+<li>Local Classifier: 基本就是传统的一些机器学习的方法, 因为只看节点本身的特征, 然后根据特征来分类。这种做法好处就是简单, 可以直接套用现有的机器学习的方法, 但是缺点是一般效果不好, 因为显然它忽略了节点在网络中的特性, 而只考虑了节点本身</li>
+<li>Relational Classifier: 相比于local的方法, 它利用了网络中的一些相互关系(correlation)</li>
+<li>Collective Inference: 会传播相互关系</li>
+</ul>
+<p>个人觉得上面这几个定义其实都比较宽泛, 视频里Michele也说了, 这只是一个大概的归纳, 实际不同方法之间的区分没有这么严格。一般用的比较多的还是<code>collective inference</code></p>
+<p>所谓Inference分为严格的和近似的, <strong>严格的推理(Exact Inference)是一个NP-hard</strong>问题, 因此更主要关注的<strong>近似推理 (Approximate Inference)</strong>。那么Exact和Approximate之间的区别是什么呢?</p>
+<blockquote>
+<p>假定我们把每个节点都表示为一个离散变量, 并用\( p \)来表示其联合质量函数(个人理解是联合分布函数的离散版)。</p>
+<p>Exact指的是一个节点的边缘分布是<strong>所有其他节点</strong>的和, 这样会导致计算复杂度急剧增大。</p>
+<p>Approximate相比于exact就是缩小了范围, 例如不需要所有节点, 只需要获得邻居的值即可(可以是一度也可以是二度)。</p>
+</blockquote>
+<p>可以看到Exact就是会充分利用网络的结构信息, 而Approximate就是舍弃了部分节点(例如离当前节点距离太远的节点)等来降低计算复杂度。</p>
+<p>Approximate Inference也可以分为三类</p>
+<ul>
+<li>Relational Classifiers</li>
+<li>Iterative classification (其实Relational也有多轮迭代, 这里的iterative感觉可能指的是还利用了节点的邻居的一些属性)</li>
+<li>Loopy Belief Propagation(这个名字暂且叫信任传播吧, 感觉翻译总是非常奇怪, 大概内容就是在把图以条件概率的形式表达出来了, 然后再利用相互关系多轮迭代)</li>
+</ul>
+<p>开始看着一脸懵, 不如结合slide的例子来看这几种方法。</p>
+<h1 id="2-probalistic-relational-classifier">2. Probalistic Relational Classifier</h1>
+<p>基本思想是一个节点属于某个标签\( Y_i \)的概率是其所有邻居属于这个标签的概率的加权平均。最开始的时候, 可能只有一部分节点有标签, 剩下一些节点可能暂时没有获得标签, 对于那些暂时没有标签的节点, 将其初始化为均匀分布, 也即每个节点属于各个标签的概率相同。这样可以确保初始化的时候各个节点都有一个概率, 然后在每轮迭代的时候会更新概率。</p>
+<p>对于一个节点\( i \)和一个标签\( c \)
+$$
+P(Y_i = c) = \frac{1}{\sum_{(i,j) \in E} W(i,j)} \sum \limits_{(i, j) \in E} W(i,j) P(Y_j = c)
+$$
+其中\( W(i, j) \)就是边(i, j)的权重</p>
+<p>算法就是初始化节点, 然后每轮重新计算节点的各个概率并更新。直到某一轮的时候所有节点的概率值和上一轮相比没有发生变化, 或者到达一个设定的最大迭代轮数时, 算法才会停止。</p>
+
+<link rel="stylesheet" href="https://whoiszihan.github.io/css/hugo-easy-gallery.css" />
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-1.png" alt="Figure 1"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-1.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-2.png" alt="Figure 2"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-2.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-3.png" alt="Figure 3"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-3.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-4.png" alt="Figure 4"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-4.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-5.png" alt="Figure 5"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-5.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-6.png" alt="Figure 6"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-6.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-7.png" alt="Figure 7"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-7.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-8.png" alt="Figure 8"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-8.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-9.png" alt="Figure 9"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-9.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+<p>这种方法的不足之处在于</p>
+<ol>
+<li>不一定能收敛, 有可能到了最大迭代次数仍然没收敛</li>
+<li>仅使用了邻居节点, 而忽略了节点特征(node feature information)</li>
+</ol>
+<h1 id="3-iterative-classification">3. Iterative Classification</h1>
+<p>这个迭代式的方法感觉课件描述的有点奇怪, 我理解的是不再直接看节点的邻居, 而是分为了两个步骤</p>
+<ol>
+<li>
+<p><strong>BootStrap phase</strong>, 将节点先转换为一个一维的向量\( a_i \), 然后利用local classifier(例如SVM, kNN之类)对节点的向量进行计算分类, 得到初始化的标签\( Y_i \)</p>
+</li>
+<li>
+<p><strong>Iterative phase</strong>, 每轮首先更新节点的向量\( a_i \), 然后根据向量更新节点的标签\( Y_i = f(a_i) \), 而更新标签是一个hard assignment(原文这么说的, 猜测意思是这一步比较费时)。然后不停迭代直到收敛或者达到最大迭代轮数的阈值</p>
+</li>
+</ol>
+<p>设置最大迭代轮数的原因是<strong>这种方法不一定会收敛</strong></p>
+<h2 id="31-example-web-page-classification">3.1 Example: Web page classification</h2>
+<p>给了一个例子, 对于网页分类, 如果仅仅根据网页内容来分类而不考虑网页之间的互相关联, 那么两个内容相似的网站(例如一个盗版网站抄袭一个正版网站的大部分内容)就很可能会被给予同样的标签。下图是例子</p>
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-10.png" alt="Figure 10"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-10.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+<p>解决办法就是不仅仅利用节点的词向量\( w = word\  vectors\ of\ current\ page \), 还利用相邻节点的标签信息
+$$
+I = (I_A, I_B, O_A, O_B), I = in, O = out
+$$
+其中\( I_A = 1\)当前节点的所有入边中, 至少有一个邻居的标签为1, \( I_B, O_A, O_B \)的定义类似。</p>
+<p>然后, 剩下可以分为三个步骤</p>
+<h3 id="1-training-set">(1) Training set</h3>
+<p>首先最开始的时候, 我们是什么标签都没定的, 有的只有网页文本, 及提取的一些特征。仅利用网页文本的word vectors训练一个local classifier来对文本进行一个最初的分类, 把这一步训练出的模型保存至下一步使用。</p>
+<h3 id="2-bootstrap">(2) Bootstrap</h3>
+<p>利用上一步中的模型对各个节点进行第一次分类, 获得初始化的标签, 然后就<strong>可以利用这些初始化的标签对节点的邻居特征(上文中提到的\( I_A, I_B, O_A, O_B, \dots \)等等 ) 进行初始化</strong>。</p>
+<p>这一步完成后, 各个节点就相当于有了一个完整的初始化特征, 包括其自身的word vectors, 以及其各个邻居的特征关系。</p>
+<h3 id="3-iterate">(3) Iterate</h3>
+<p>这一步的内容就是根据上一步得到的初始化特征运行多轮算法的迭代, 每轮</p>
+<ul>
+<li>更新节点的相关特征</li>
+<li>利用更新后的特征对节点进行重新分类</li>
+</ul>
+<p>一直迭代到各个节点的标签不再发生变化, 或者达到了最大迭代轮数。注意<strong>这里的收敛指的是节点的分类标签不再变化, 而不是节点的特征</strong></p>
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-11.png" alt="Figure 11"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-11.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-12.png" alt="Figure 12"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-12.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-13.png" alt="Figure 13"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-13.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-14.png" alt="Figure 14"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-14.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-15.png" alt="Figure 15"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-15.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-16.png" alt="Figure 16"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-16.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-17.png" alt="Figure 17"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-17.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+<h2 id="32-application-of-iterative-classification-framework-fake-reviewerreview-detection">3.2 Application of iterative classification framework: fake reviewer/review detection</h2>
+<p>这是Kumar等人在ACM Web Search and Data Mining, 2018发表的论文<a href="https://cs.stanford.edu/~srijan/pubs/rev2-wsdm18.pdf">REV2: Fraudulent User Predictions in Rating Platforms</a></p>
+<p>Fake review(不知为何老是想到fake news&hellip;)的检测一般会利用个人的一些行为 + 语义内容检测等, 个人特征指的是地址位置、会话历史等, 而语言特征则是说话的常用词和结构之类。</p>
+<p>然而, <strong>个人的行文和评论的内容是很容易伪造的</strong>, 比如大家经常能看到微博和一些网店下面都是控评/刷好评的。</p>
+<p>相比之下, <strong>图网络的结构是更难伪造的</strong>, 比如这些僵尸号都给同一件物品刷了评论等特征。</p>
+<p>基本思路就是把用户和商品分别看成一个二分图等两部分, 然后用户可以给一些商品打分, 一共维护三个评分</p>
+<ul>
+<li>每个用户的fairness评分, \( F(u) \in [0, 1] \)</li>
+<li>每个评分有一个reliability评分, \( R(u, p) \in [0, 1] \)</li>
+<li>每个商品有一个goodness评分, \( G(p) \in [-1, 1] \)</li>
+</ul>
+<p>在每一轮的更新公式为
+$$
+F(u) = \frac{\sum \limits_{(u, p) \in Out(u)} R(u, p)}{|Out(u)|}
+$$</p>
+<p>$$
+G(p) = \frac{\sum \limits_{(u,p) \in In(p)} R(u,p) \cdot score(u,p)}{|In(p)|}
+$$</p>
+<p>$$
+R(u,p)=\frac{1}{\gamma_1 + \gamma_2}(\gamma_1 \cdot F(u) + \gamma_2 \cdot (1-\frac{|score(u,p)-G(p)|}{2}))
+$$</p>
+<p>其中\( \gamma_1, \gamma_2 \)是超参数, 分别调节用户评分的fairness和商品的goodness</p>
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-18.png" alt="Figure 18"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-18.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-19.png" alt="Figure 19"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-19.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-20.png" alt="Figure 20"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-20.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-21.png" alt="Figure 21"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-21.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+<p>当然, 所有这些迭代公式都需要一个初始化的分数(不知道这是不是就是ml中所说的冷启动?), 默认都是1, 下面是个例子。</p>
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-22.png" alt="Figure 22"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-22.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-23.png" alt="Figure 23"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-23.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-24.png" alt="Figure 24"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-24.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-25.png" alt="Figure 25"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-25.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-26.png" alt="Figure 26"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-26.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+<p>这种方法的好处在于</p>
+<ul>
+<li>保证会收敛(暂时没看到证明)</li>
+<li>在收敛之前需要迭代的轮数是有上限的, 也就是最多迭代一个固定轮数后就一定收敛</li>
+<li>时间复杂度和图中边的个数线性正相关</li>
+</ul>
+<p>最后把fairness得分低低用户当作虚假用户, 精确率 127/150, 而且top 80的结果都是100%准确的。</p>
+<h1 id="4-collective-classification-belief-propagation">4. Collective Classification: Belief Propagation</h1>
+<p>更精确的说, 这节叫<em>Loopy belief propagation</em>, 名字有点奇怪, 原文是这样定义的</p>
+<blockquote>
+<ul>
+<li>Belief Propagation is a dynamic programming approach to answering conditional probability queries in a graphical model</li>
+<li>Iterative process in which neighbor variables “talk” to each other, passing messages</li>
+</ul>
+</blockquote>
+<p>这个迭代过程会一直重复, 直到各个节点达成共识, 然后将最后这一步的belief当作结果输出。</p>
+<p>感觉有点云里雾里, 其实这个名字和后面的方法感觉并不是严格对应, 看个例子</p>
+<h2 id="41-message-passing">4.1 Message passing</h2>
+<p>假定</p>
+<p><strong>任务</strong>: 计算图中有多少节点</p>
+<p><strong>条件</strong>: 每个节点只能和其邻居进行通信</p>
+<p><strong>解决办法</strong>: 每个节点监听从邻居节点发送过来的消息, 更新, 然后再传递给新的邻居。</p>
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-27.png" alt="Figure 27"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-27.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-28.png" alt="Figure 28"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-28.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-29.png" alt="Figure 29"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-29.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+<p>感觉其实就是和DFS有点像, 只不过换成了图的版本。下面这个例子会更清楚</p>
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-30.png" alt="Figure 30"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-30.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-31.png" alt="Figure 31"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-31.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+<p>不过要注意这种方法要求<strong>图中不能有环</strong>, 不然会无法停止, 不过个人觉得如果魔改下应该还是可以处理环的结构的。</p>
+<h2 id="42-loopy-bp-algorithm">4.2 Loopy BP Algorithm</h2>
+<p>这节是主要解决, 一个节点<em>i</em>发送给节点<em>j</em>的消息到底包括什么</p>
+<blockquote>
+<p>Each neighbor <em>k</em> passes a message to <em>i</em> its beliefs of the state to <em>i</em></p>
+</blockquote>
+<p>什么叫belief？其实就是你当前获得的其他节点的信息的表示。先看几个基本概念</p>
+<ul>
+<li>
+<p><strong>Label-label potential matrxi \( \psi \)</strong>: \( \psi (Y_i, Y_j) \)表示如果节点<em>j</em>的邻居<em>i</em>处于状态\( Y_i \), 那么节点<em>j</em>处于状态\( Y_j \)的概率</p>
+</li>
+<li>
+<p><strong>Prior belief \( \phi \)</strong>:\( \phi_i (Y_i) \)代表节点<em>i</em>属于状态\( Y_i \)的概率</p>
+</li>
+<li>
+<p>\( m_{i \rightarrow j } (Y_j) \) : 从i发到j的消息, 代表节点i处于状态\( Y_j \)的概率, 实际中不会仅仅发送状态Yi, 而是包括了所有可能状态的概率</p>
+</li>
+<li>
+<p><strong>\( \mathcal{L} \)</strong>: 代表所有状态的集合, 实际中比较少用, 一般是数学证明的时候用到</p>
+</li>
+</ul>
+<p>$$
+m_{i \rightarrow j}(Y_j) = \alpha \sum \limits_{Y_i \in \mathcal{L}} \psi(Y_i, Y_j) \phi_i(Y_i) \prod \limits_{k \in \mathcal{N_i \backslash j}} m_{k \rightarrow i} (Y_i)
+$$</p>
+<p>$$
+b_i(Y_i) = \alpha \phi_i(Y_i) \prod \limits_{j \in \mathcal{Ni}} m_{j \rightarrow i}(Y_i), \forall Y_i \in \mathcal{L}
+$$</p>
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-32.png" alt="Figure 32"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-32.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-33.png" alt="Figure 33"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-33.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+<p>那么, 如果图里面有环呢? 会导致<strong>来自不同子图的消息之间不再相互独立, 但是我们仍然可以运行BP算法</strong>, 因为它是一个local算法, 因此它不会收到环的影响。至于环会不会对最后的结果准确度有影响, 这个可能就要看实际的场景了。</p>
+<p>下面是一个环可能导致出错的例子</p>
+
+
+<div class="box" >
+  <figure  itemprop="associatedMedia" itemscope itemtype="http://schema.org/ImageObject">
+    <div class="img">
+      <img itemprop="thumbnail" src="/images/cs224w/cs224w-lec6-34.png" alt="Figure 34"/>
+    </div>
+    <a href="/images/cs224w/cs224w-lec6-34.png" itemprop="contentUrl"></a>
+  </figure>
+</div>
+
+<p>上图中, belief在第一圈传播的时候还是对的, 但是到第二圈的时候经过求和T的值会加倍, 因此循环的次数越多, 标签为\( T \)的可能性就越大, 而这和原始的标签概率已经不同了。当然这是一个极端的例子, 大部分情况下环的影响是比较弱的。</p>
+<p><strong>信任传播的优点</strong></p>
+<ul>
+<li>易于编程, 也容易并行化</li>
+<li>较为通用, 可以被稍作修改后套用到任何图形模型中</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>不一定会收敛, 尤其是如果图中有过多循环的时候</li>
+</ul>
+<p>对于上面公式中一些潜在的参数, 需要经过训练来确定最优值, 利用梯度下降来训练, 但训练时也会有收敛性方面的问题(什么问题? 这里我没太看懂)</p>
+<h2 id="43-application-of-belief-propagation-online-auction-fraud">4.3 Application of Belief Propagation: Online Auction Fraud</h2>
+<p>Pandit等人发表在World Wide Web conference 2007上的<a href="cs.cmu.edu/~christos/PUBLICATIONS/netprobe-www07.pdf">Netprobe: A Fast and Scalable System for Fraud Detection in Online Auction Networks</a></p>
+<p>在购物网站上, 用户和卖家分别可以给对方打分, 但总是免不了会有一些不守规则的人, 比如卖家发假货, 买家恶意给差评等。</p>
+<p>那些不守法的卖家或买家之间会不会互相勾结, 进行刷分呢? 大部分不会, 因为如果这样做, 一个人被抓了, 所有人都暴露了</p>
+<p>可以将整个网络看成一个类似二分图的形式, 总共有三种角色</p>
+<ul>
+<li>
+<p>正常买家/卖家: 诚实的人 :)</p>
+</li>
+<li>
+<p>同谋: 大部分情况和正常买家/卖家进行交易, 表面上看起来似乎是正常的</p>
+</li>
+<li>
+<p>欺诈者: 和同谋进行大量正常交易来尽量比避免被风控, 但是遇到正常买家/卖家的时候就会有欺诈行为</p>
+</li>
+</ul>
+<p><img src="/images/cs224w/cs224w-lec6-35.png" alt="cs224w-lec6-35"></p>
+<p><img src="/images/cs224w/cs224w-lec6-36.png" alt="cs224w-lec6-36"></p>
+<p>上面的表格中, 不同的欺诈者之间相互沟通的概率\( \epsilon_p \)一般会比较低, 而和accomplice进行交易的概率比较高.</p>
+<p>下面是一个例子</p>
+<p><img src="/images/cs224w/cs224w-lec6-37.png" alt="cs224w-lec6-37"></p>
+<p>其中无色的是诚实的用户, 黄色的是同谋accomplice, 红色的节点是欺诈者。每个节点的标签就是其各个belief中最高值对应的标签</p>
+<h1 id="5-conclusion">5. Conclusion</h1>
+<p><img src="/images/cs224w/cs224w-lec6-38.png" alt="cs224w-lec6-38"></p>
+
+        
+          <div class="blog-tags">
+            
+              <a href="https://whoiszihan.github.io/tags/graph/">graph</a>&nbsp;
+            
+              <a href="https://whoiszihan.github.io/tags/cs224w/">cs224w</a>&nbsp;
+            
+          </div>
+        
+
+        
+
+        
+      </article>
+
+      
+        <ul class="pager blog-pager">
+          
+            <li class="previous">
+              <a href="https://whoiszihan.github.io/posts/cs224w-lecture-5/" data-toggle="tooltip" data-placement="top" title="Cs224w Lecture 5 - Spectral Clustering">&larr; Previous Post</a>
+            </li>
+          
+          
+        </ul>
+      
+
+
+      
+
+    </div>
+  </div>
+</div>
+
+      
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <ul class="list-inline text-center footer-links">
+          
+          
+        </ul>
+        <p class="credits copyright text-muted">
+          
+
+          &nbsp;&bull;&nbsp;&copy;
+          
+            2020
+          
+
+          
+            &nbsp;&bull;&nbsp;
+            <a href="https://whoiszihan.github.io">Eat, shop, drink, think.</a>
+          
+        </p>
+        
+        <p class="credits theme-by text-muted">
+          <a href="https://gohugo.io">Hugo v0.82.0-DEV</a> powered &nbsp;&bull;&nbsp; Theme <a href="https://github.com/halogenica/beautifulhugo">Beautiful Hugo</a> adapted from <a href="https://deanattali.com/beautiful-jekyll/">Beautiful Jekyll</a>
+          
+        </p>
+      </div>
+    </div>
+  </div>
+</footer><script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js" integrity="sha384-K3vbOmF2BtaVai+Qk37uypf7VrgBubhQreNQe9aGsz9lB63dIFiQVlJbr92dw2Lx" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js" integrity="sha384-kmZOZB5ObwgQnS/DuDg6TScgOiWWBiVt0plIRkZCmE6rDZGrEOQeHM5PcHi+nyqe" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+<script src="https://whoiszihan.github.io/js/main.js"></script><script> renderMathInElement(document.body); </script><script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe.min.js" integrity="sha384-QELNnmcmU8IR9ZAykt67vGr9/rZJdHbiWi64V88fCPaOohUlHCqUD/unNN0BXSqy" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.2/photoswipe-ui-default.min.js" integrity="sha384-m67o7SkQ1ALzKZIFh4CiTA8tmadaujiTa9Vu+nqPSwDOqHrDmxLezTdFln8077+q" crossorigin="anonymous"></script><script src="https://whoiszihan.github.io/js/load-photoswipe.js"></script>
+
+
+
+
+
+
+
+
+
+    
+  </body>
+</html>
+
